@@ -37,5 +37,6 @@ int main() {
     int sumN = getSumOfN(elves,3);
     printf("%d\n",sumN);
     printf("%d",highest_sum);
+	free(elves);
     return 0;
 }
