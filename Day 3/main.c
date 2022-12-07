@@ -1,44 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
-
-typedef struct Map{
-    char key;
-    int value;
-}map;
-
-enum { size = 100};
-int used = 0;
-map itemMap[size];
-
-void clearMap(){
-    for(int i =0;i<used;i++){
-        itemMap[i].key = ' ';
-        itemMap[i].value = 0;
-    }
-    used = 0;
-}
-
-void addOrIncr(char key){
-    for(int i=0;i<used;i++){
-        if(itemMap[i].key == key){
-            itemMap[i].value +=1;
-            return;
-        }
-    }
-    itemMap[used].key = key;
-    itemMap[used].value = 1;
-    used++;
-}
-
-bool contains(char key){
-    for(int i=0;i<used;i++){
-        if(itemMap[i].key == key){
-            return true;
-        }
-    }
-    return false;
-}
 
 int typeToPoints(char c){
     if(c >= 'A' && c <= 'Z'){
@@ -48,40 +9,67 @@ int typeToPoints(char c){
     }
 }
 
+void splitString(char* source,char* left,char* right,size_t size){
+    char *startOfString = source;
+    memcpy(left,startOfString,size/2);
+    left[size/2] = '\000';
+    startOfString += size/2;
+    memcpy(right,startOfString,size/2);
+    right[size/2] = '\000';
+}
+
+char * findObjectInCommon(char group[3][255]){
+    char common[50];
+    int count = 0;
+    for(int x=0;x< strlen(group[1]);x++){
+        char *matchUp = strchr(group[0],group[1][x]);
+        char *matchDown = strchr(group[2],group[1][x]);
+
+        if(matchUp != NULL && matchDown != NULL && matchDown[0] != '\n' && matchDown[0] != '\000'){
+            return matchDown;
+        }
+    }
+    return group[0];
+}
 
 int main() {
     int prioritySum = 0;
+    int groupPrioritySum = 0;
     char buff[255];
-    char *startOfString;
+
     char left[255];
     char right[255];
+
+    char group[3][255];
+
     size_t len = 0;
-//    for(int i = 65;i<123;i++){
-//        printf("%c",i);
-//    }
+    int count = 0;
+
     while (fgets(buff,255,stdin)!=NULL){
         len = strlen(buff)-1;
-        startOfString = buff;
-        memcpy(left,startOfString,len/2);
-        left[len/2] = '\000';
-        startOfString += len/2;
-        memcpy(right,startOfString,len/2);
-        right[len/2] = '\000';
-        for(int i =0;i<len/2;i++){
-            addOrIncr(left[i]);
+        strcpy(group[count],buff);
+        count++;
+        if (count > 2){
+            char *commonTypeP = findObjectInCommon(group);
+            char commonType;
+            memcpy(&commonType,commonTypeP,1);
+            groupPrioritySum += typeToPoints(commonType);
+            count = 0;
+            memset(group[0],'\000',sizeof(group[0]));
+            memset(group[1],'\000',sizeof(group[1]));
+            memset(group[2],'\000',sizeof(group[2]));
+
         }
+        splitString(buff,left,right,len);
         for(int i =0;i<len/2;i++){
-            bool has = contains(right[i]);
-            if(has){
-                char z = right[i];
-                prioritySum += typeToPoints(right[i]);
-                printf("%c",right[i]);
+            char *contains = strchr(right,left[i]);
+            if(contains != NULL){
+                prioritySum += typeToPoints(*contains);
                 break;
             }
         }
-        printf("\n");
-        clearMap();
     }
-    printf("%d",prioritySum);
+    printf("%d\n",prioritySum);
+    printf("%d",groupPrioritySum);
     return 0;
 }
