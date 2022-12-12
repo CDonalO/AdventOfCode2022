@@ -127,6 +127,13 @@ void findMinSizeToUpdate(kv * currDir,unsigned long* currSmallest,unsigned long 
     }
 }
 
+void freeTree(kv * currDir){
+    for(int i =0;i<currDir->childCount;i++){
+        freeTree(currDir->children[i]);
+    }
+    free(currDir);
+}
+
 int main() {
     char buff[100];
     unsigned long sum = 0;
@@ -148,5 +155,6 @@ int main() {
 //    printTree(root,0);
     printf("%lli\n",sum);
     printf("%lli",smallestSize);
+    freeTree(root);
     return 0;
 }
