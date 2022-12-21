@@ -1,24 +1,56 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <math.h>
 #include "hashmap.h"
 
-int headX = 0;
-int headY = 0;
-int tailX = 0;
-int tailY = 0;
-map * m;
+void executeMove(int n,char dir,int index);
 
-bool checkIfTailNearby(){
-    int xDif = abs(headX-tailX);
-    int yDif = abs(headY-tailY);
-    if(xDif<=1 && xDif >= 0 && yDif<=1 && yDif >=0){
-        return true;
+typedef struct coords{
+    int x;
+    int y;
+}knot;
+
+enum {knotCount=10};
+
+
+knot knots[knotCount];
+map * m[knotCount];
+
+
+void moveTail(int index){
+    if (index == knotCount-1){
+        return;
     }
-    return false;
+    addKey(knots[index+1].x,knots[index+1].y,1,m[index+1]);
+    int xDif = knots[index].x-knots[index+1].x;
+    int yDif = knots[index].y-knots[index+1].y;
+    if (xDif >= 2){
+        knots[index+1].x = knots[index].x-1;
+        if (yDif == 1 || yDif == -1){
+            knots[index+1].y += yDif;
+        }
+    }else if (xDif <= -2){
+        knots[index+1].x = knots[index].x+1;
+        if (yDif == 1 || yDif == -1){
+            knots[index+1].y += yDif;
+        }
+    }
+
+    if (yDif >= 2){
+        knots[index+1].y = knots[index].y-1;
+        if (xDif == 1 || xDif == -1){
+            knots[index+1].x += xDif;
+        }
+    } else if (yDif <= -2){
+        knots[index+1].y = knots[index].y+1;
+        if (xDif == 1 || xDif == -1){
+            knots[index+1].x += xDif;
+        }
+    }
+    moveTail(index+1);
 }
 
-void executeMove(int n,char dir){
+void executeMove(int n,char dir,int index){
     int xOffset = 0;
     int yOffset = 0;
     if(dir == 'U'){
@@ -32,20 +64,17 @@ void executeMove(int n,char dir){
     }
 
     for (int i = 0; i < n; i++) {
-        headX += xOffset;
-        headY += yOffset;
-        if (!checkIfTailNearby()){
-            addKey(tailX,tailY,1,m);
-            tailX = headX-xOffset;
-            tailY = headY-yOffset;
-        }
+        knots[index].x += xOffset;
+        knots[index].y += yOffset;
+        moveTail(index);
     }
 }
 
-void countVisited(int * sum){
+void countVisited(int * sum,int knot){
+    addKey(knots[knot].x,knots[knot].y,1,m[knot]);
     kv * current = NULL;
-    for (int i = 0; i < m->capacity; i++) {
-        current = &m->map[i];
+    for (int i = 0; i < m[knot]->capacity; i++) {
+        current = &m[knot]->map[i];
         while (current != NULL){
             *sum += current->value;
             current = current->next;
@@ -53,27 +82,30 @@ void countVisited(int * sum){
     }
 }
 
+void init(){
+    for (int i = 0; i < knotCount; i++) {
+        m[i] = createMap(300);
+        knots[i].x = 0;
+        knots[i].y = 0;
+    }
+}
+
 int main() {
-    m = createMap(300);
+    init();
     char buff[25];
     char move;
     int amount;
-    int c = 0;
     char * startOfBuff;
     while (fgets(buff,25,stdin)){
-        c++;
-        if (c == 922){
-            c = 922;
-        }
         startOfBuff = buff;
         move = buff[0];
         startOfBuff++;
         amount = strtol(startOfBuff,NULL,10);
-        executeMove(amount,move);
-        printf("%d %s ",c,buff);
+        executeMove(amount,move,0);
     }
     amount = 0;
-    countVisited(&amount);
-    printf("%d",amount+1);
+    // Alter KnotCount and knot for different parts
+    countVisited(&amount,9);
+    printf("\n%d",amount);
     return 0;
 }
